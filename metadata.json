@@ -1,0 +1,6 @@
+{
+  "name": "Celebrate Life's Beautiful Moments",
+  "description": "An elegant event invitation platform and guest RSVP suite with interactive highlights, simulated mail gateway, and full-stack activity logging.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
