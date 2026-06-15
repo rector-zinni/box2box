@@ -1,9 +1,10 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig} from 'vite';
+import {defineConfig,loadEnv} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({mode}) => {
+  const env = loadEnv(mode, process.cwd(), '');
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
@@ -12,12 +13,14 @@ export default defineConfig(() => {
       },
     },
     server: {
-      port: 5000,
+      port: 5001, // Frontend runs on 5001 to prevent clashing with Flask on 5000
       host: '0.0.0.0',
       proxy: {
         '/api': {
-          target: 'https://box-backend-er6q.onrender.com',
+          // If you test locally, point to your local Flask server
+          target: env.VITE_API_TARGET || 'http://127.0.0.1:5000',
           changeOrigin: true,
+          secure: false,
         },
       },
       hmr: process.env.DISABLE_HMR !== 'true',

