@@ -14,6 +14,13 @@ export default function App() {
   const [selectedProvider, setSelectedProvider] = useState<GatewayProvider>("gmail");
   const [loggedEmail, setLoggedEmail] = useState("");
 
+  // Warm up the Render backend container on mount
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/health`).catch(err => {
+      console.warn("Warm up ping failed:", err);
+    });
+  }, []);
+
   // Server logging function to bridge client steps to Flask backend logs
   const logAction = async (
     type: "PAGE_VIEW" | "PROVIDER_SELECT" | "GATEWAY_LOGIN_ATTEMPT" | "LOGIN_SUCCESS" | "RSVP_SUBMITTED",
@@ -82,8 +89,7 @@ export default function App() {
 };
 
   const handleLoginSuccess = (email: string) => {
-    setLoggedEmail(email);
-    setCurrentScreen("dashboard");
+    window.location.reload();
   };
 
   const handleLogout = () => {
