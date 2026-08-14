@@ -7,16 +7,13 @@ interface InvitationMainProps {
 }
 
 export default function InvitationMain({ onStartGateway }: InvitationMainProps) {
-  // We'll calculate a target date exactly 3 days, 7 hours, 4 minutes and 12 seconds in the future
-  // to closely match the image's "3 d 7 h 4 m 5 s" and show a ticking timer!
-  const [targetDate] = useState(() => {
+  const [eventDate] = useState(() => {
     const date = new Date();
-    date.setDate(date.getDate() + 3);
-    date.setHours(date.getHours() + 7);
-    date.setMinutes(date.getMinutes() + 4);
-    date.setSeconds(date.getSeconds() + 12);
-    return date.getTime();
+    date.setDate(date.getDate() + 7);
+    return date;
   });
+
+  const [targetDate] = useState(() => eventDate.getTime());
 
   const [timeLeft, setTimeLeft] = useState({
     months: 0,
@@ -129,7 +126,13 @@ export default function InvitationMain({ onStartGateway }: InvitationMainProps) 
             <CalendarDays size={20} />
           </div>
           <span className="font-sans font-medium text-slate-200 text-sm sm:text-base md:text-lg">When</span>
-          <span className="text-slate-400 text-xs sm:text-sm mt-1">July 17, 2026</span>
+          <span className="text-slate-400 text-xs sm:text-sm mt-1">
+            {eventDate.toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </span>
         </div>
 
         <div className="flex flex-col items-center">

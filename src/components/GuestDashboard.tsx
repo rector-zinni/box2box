@@ -12,6 +12,21 @@ interface GuestDashboardProps {
 // 💡 Capture the environment variable injected by Render, fallback to an empty string for local proxy matching
 const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
+const formatGuestbookDate = (value: string) => {
+  const parsed = new Date(value);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "Unknown date";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(parsed);
+};
+
 export default function GuestDashboard({ guestEmail, onLogout, logAction }: GuestDashboardProps) {
   // State from API backend
   const [rsvps, setRsvps] = useState<RSVP[]>([]);
@@ -495,7 +510,7 @@ export default function GuestDashboard({ guestEmail, onLogout, logAction }: Gues
                       {msg.author}
                     </p>
                     <span className="text-[10px] text-slate-500 inline-block">
-                      {new Date(msg.createdAt).toLocaleDateString()}
+                      {formatGuestbookDate(msg.createdAt)}
                     </span>
                     <p className="font-sans text-xs text-slate-300 font-light leading-relaxed">
                       {msg.message}
